@@ -3,6 +3,9 @@ const cors = require('cors');
 require('dotenv').config();
 const mysql = require('mysql2');
 
+// Importamos el catálogo centralizado de errores
+const errores = require('./errores');
+
 const app = express();
 
 // Middlewares
@@ -19,7 +22,7 @@ const db = mysql.createConnection({
 
 db.connect((err) => {
   if (err) {
-    console.error('Error conectando a la base de datos:', err.message);
+    console.error(errores.DB_CONNECTION_ERROR.mensaje, err.message);
   } else {
     console.log('¡Conectado a la base de datos MySQL!');
   }
@@ -38,7 +41,10 @@ app.post('/api/registro', (req, res) => {
   db.query('INSERT INTO Usuarios (nombre, correo, password_hash, rol) VALUES (?, ?, ?, ?)', 
     [nombre, correo, password, rolUsuario], 
     (err, result) => {
-      if (err) return res.status(400).json({ error: 'El correo ya está registrado' });
+      if (err) {
+        const errDef = errores.CORREO_DUPLICADO;
+        return res.status(errDef.status).json({ code: errDef.code, error: errDef.mensaje });
+      }
       res.json({ mensaje: '¡Registro exitoso! Ya puedes iniciar sesión.' });
   });
 });
@@ -48,14 +54,20 @@ app.post('/api/login', (req, res) => {
   const { correo, password } = req.body;
   
   db.query('SELECT * FROM Usuarios WHERE correo = ?', [correo], (err, resultados) => {
-    if (err) return res.status(500).json({ error: 'Error del servidor' });
-    if (resultados.length === 0) return res.status(404).json({ error: 'Usuario no encontrado' });
+    if (err) {
+      const errDef = errores.DB_QUERY_ERROR;
+      return res.status(errDef.status).json({ code: errDef.code, error: errDef.mensaje });
+    }
+    if (resultados.length === 0) {
+      const errDef = errores.USUARIO_NO_ENCONTRADO;
+      return res.status(errDef.status).json({ code: errDef.code, error: errDef.mensaje });
+    }
 
     const usuario = resultados[0];
     
-    // Comparar la contraseña ingresada en texto plano
     if (password !== usuario.password_hash) {
-      return res.status(401).json({ error: 'Contraseña incorrecta' });
+      const errDef = errores.CONTRASENA_INCORRECTA;
+      return res.status(errDef.status).json({ code: errDef.code, error: errDef.mensaje });
     }
 
     res.json({ 
@@ -71,7 +83,10 @@ app.get('/api/eventos', (req, res) => {
   const query = 'SELECT * FROM Eventos';
   
   db.query(query, (err, resultados) => {
-    if (err) return res.status(500).json({ error: 'Error interno del servidor' });
+    if (err) {
+      const errDef = errores.DB_QUERY_ERROR;
+      return res.status(errDef.status).json({ code: errDef.code, error: errDef.mensaje });
+    }
     res.json(resultados); 
   });
 });
@@ -81,13 +96,20 @@ app.post('/api/inscribirse', (req, res) => {
   const { id_usuario, id_evento } = req.body;
 
   db.query('SELECT fecha_hora, cupos_disponibles FROM Eventos WHERE id_evento = ?', [id_evento], (err, resultadosEvento) => {
-    if (err) return res.status(500).json({ error: 'Error interno del servidor' });
-    if (resultadosEvento.length === 0) return res.status(404).json({ error: 'Evento no encontrado' });
+    if (err) {
+      const errDef = errores.DB_QUERY_ERROR;
+      return res.status(errDef.status).json({ code: errDef.code, error: errDef.mensaje });
+    }
+    if (resultadosEvento.length === 0) {
+      const errDef = errores.EVENTO_NO_ENCONTRADO;
+      return res.status(errDef.status).json({ code: errDef.code, error: errDef.mensaje });
+    }
     
     const eventoNuevo = resultadosEvento[0];
 
     if (eventoNuevo.cupos_disponibles <= 0) {
-      return res.status(400).json({ error: 'El evento ya está lleno' });
+      const errDef = errores.EVENTO_LLENO;
+      return res.status(errDef.status).json({ code: errDef.code, error: errDef.mensaje });
     }
 
     const queryValidacion = `
@@ -98,21 +120,36 @@ app.post('/api/inscribirse', (req, res) => {
     `;
 
     db.query(queryValidacion, [id_usuario], (err, inscripcionesActivas) => {
-      if (err) return res.status(500).json({ error: 'Error al validar inscripciones' });
+      if (err) {
+        const errDef = errores.DB_QUERY_ERROR;
+        return res.status(errDef.status).json({ code: errDef.code, error: errDef.mensaje });
+      }
 
       const yaInscrito = inscripcionesActivas.find(inscripcion => inscripcion.id_evento === id_evento);
-      if (yaInscrito) return res.status(400).json({ error: 'Ya estás inscrito en este evento' });
+      if (yaInscrito) {
+        const errDef = errores.YA_INSCRITO;
+        return res.status(errDef.status).json({ code: errDef.code, error: errDef.mensaje });
+      }
 
       const choqueHorario = inscripcionesActivas.find(inscripcion => 
         new Date(inscripcion.fecha_hora).getTime() === new Date(eventoNuevo.fecha_hora).getTime()
       );
-      if (choqueHorario) return res.status(400).json({ error: 'Tienes otro evento programado exactamente para el mismo día y hora' });
+      if (choqueHorario) {
+        const errDef = errores.CHOQUE_HORARIO;
+        return res.status(errDef.status).json({ code: errDef.code, error: errDef.mensaje });
+      }
 
       db.query('INSERT INTO Inscripciones (id_usuario, id_evento) VALUES (?, ?)', [id_usuario, id_evento], (err) => {
-        if (err) return res.status(500).json({ error: 'Error al registrar la inscripción' });
+        if (err) {
+          const errDef = errores.DB_QUERY_ERROR;
+          return res.status(errDef.status).json({ code: errDef.code, error: errDef.mensaje });
+        }
 
         db.query('UPDATE Eventos SET cupos_disponibles = cupos_disponibles - 1 WHERE id_evento = ?', [id_evento], (err) => {
-          if (err) return res.status(500).json({ error: 'Error al actualizar los cupos' });
+          if (err) {
+            const errDef = errores.DB_QUERY_ERROR;
+            return res.status(errDef.status).json({ code: errDef.code, error: errDef.mensaje });
+          }
           res.json({ mensaje: '¡Inscripción exitosa!' });
         });
       });
@@ -131,7 +168,10 @@ app.get('/api/mis-inscripciones/:id_usuario', (req, res) => {
   `;
   
   db.query(query, [id_usuario], (err, resultados) => {
-    if (err) return res.status(500).json({ error: 'Error al obtener el historial' });
+    if (err) {
+      const errDef = errores.DB_QUERY_ERROR;
+      return res.status(errDef.status).json({ code: errDef.code, error: errDef.mensaje });
+    }
     res.json(resultados);
   });
 });
@@ -141,23 +181,39 @@ app.post('/api/cancelar', (req, res) => {
   const { id_usuario, id_evento } = req.body;
 
   db.query('SELECT fecha_hora FROM Eventos WHERE id_evento = ?', [id_evento], (err, resultados) => {
-    if (err) return res.status(500).json({ error: 'Error del servidor' });
-    if (resultados.length === 0) return res.status(404).json({ error: 'Evento no encontrado' });
+    if (err) {
+      const errDef = errores.DB_QUERY_ERROR;
+      return res.status(errDef.status).json({ code: errDef.code, error: errDef.mensaje });
+    }
+    if (resultados.length === 0) {
+      const errDef = errores.EVENTO_NO_ENCONTRADO;
+      return res.status(errDef.status).json({ code: errDef.code, error: errDef.mensaje });
+    }
 
     const fechaEvento = new Date(resultados[0].fecha_hora);
     const fechaActual = new Date();
     const diferenciaHoras = (fechaEvento - fechaActual) / (1000 * 60 * 60);
 
     if (diferenciaHoras < 24) {
-      return res.status(400).json({ error: 'No puedes cancelar con menos de 24 horas de anticipación' });
+      const errDef = errores.CANCELACION_TEMPRANA;
+      return res.status(errDef.status).json({ code: errDef.code, error: errDef.mensaje });
     }
 
     db.query("UPDATE Inscripciones SET estado = 'CANCELADA' WHERE id_usuario = ? AND id_evento = ? AND estado = 'ACTIVA'", [id_usuario, id_evento], (err, result) => {
-      if (err) return res.status(500).json({ error: 'Error al cancelar' });
-      if (result.affectedRows === 0) return res.status(400).json({ error: 'La inscripción ya estaba cancelada o no existe' });
+      if (err) {
+        const errDef = errores.DB_QUERY_ERROR;
+        return res.status(errDef.status).json({ code: errDef.code, error: errDef.mensaje });
+      }
+      if (result.affectedRows === 0) {
+        const errDef = errores.INSCRIPCION_NO_ACTIVA;
+        return res.status(errDef.status).json({ code: errDef.code, error: errDef.mensaje });
+      }
 
       db.query('UPDATE Eventos SET cupos_disponibles = cupos_disponibles + 1 WHERE id_evento = ?', [id_evento], (err) => {
-        if (err) return res.status(500).json({ error: 'Error al restaurar el cupo' });
+        if (err) {
+          const errDef = errores.DB_QUERY_ERROR;
+          return res.status(errDef.status).json({ code: errDef.code, error: errDef.mensaje });
+        }
         res.json({ mensaje: 'Inscripción cancelada. Se ha devuelto tu cupo.' });
       });
     });
@@ -176,7 +232,10 @@ app.post('/api/eventos', (req, res) => {
   `;
 
   db.query(query, [nombre, descripcion, categoria, fecha_hora, lugar, precio, capacidad_total, cupos_disponibles, imagen_url], (err, result) => {
-    if (err) return res.status(500).json({ error: 'Error al guardar el evento en la base de datos' });
+    if (err) {
+      const errDef = errores.DB_QUERY_ERROR;
+      return res.status(errDef.status).json({ code: errDef.code, error: errDef.mensaje });
+    }
     res.json({ mensaje: '¡Evento publicado con éxito!', id_evento: result.insertId });
   });
 });
@@ -192,7 +251,10 @@ app.get('/api/eventos/:id_evento/asistentes', (req, res) => {
   `;
 
   db.query(query, [id_evento], (err, resultados) => {
-    if (err) return res.status(500).json({ error: 'Error al consultar la lista de asistentes' });
+    if (err) {
+      const errDef = errores.DB_QUERY_ERROR;
+      return res.status(errDef.status).json({ code: errDef.code, error: errDef.mensaje });
+    }
     res.json(resultados);
   });
 });
