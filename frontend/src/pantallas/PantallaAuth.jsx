@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 
 function PantallaAuth({ onLogin }) {
@@ -50,7 +51,10 @@ function PantallaAuth({ onLogin }) {
 
   return (
     <div style={{ padding: '50px', maxWidth: '400px', margin: '0 auto', textAlign: 'center' }}>
-      <h2>{esRegistro ? 'Crear Nueva Cuenta' : 'Iniciar Sesión'}</h2>
+      
+      <h2 style={{ color: '#1565C0' }}>
+        {esRegistro ? 'Crear Nueva Cuenta' : 'Iniciar Sesión'}
+      </h2>
       
       {mensajeError && <p style={{ color: 'red', fontWeight: 'bold' }}>{mensajeError}</p>}
 
@@ -61,7 +65,7 @@ function PantallaAuth({ onLogin }) {
         <input type="email" placeholder="Correo electrónico" value={correo} onChange={(e) => setCorreo(e.target.value)} required style={{ padding: '10px' }} />
         <input type="password" placeholder="Contraseña" value={password} onChange={(e) => setPassword(e.target.value)} required style={{ padding: '10px' }} />
         
-        <button type="submit" style={{ padding: '10px', background: '#28a745', color: 'white', border: 'none', cursor: 'pointer' }}>
+        <button type="submit" style={{ padding: '10px', background: '#1565C0', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>
           {esRegistro ? 'Registrarme' : 'Entrar al Sistema'}
         </button>
       </form>
