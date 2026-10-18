@@ -1,0 +1,34 @@
+CREATE DATABASE sistema_eventos;
+USE sistema_eventos;
+
+CREATE TABLE Usuarios (
+    id_usuario INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    correo VARCHAR(150) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    rol ENUM('ADMIN', 'USUARIO') DEFAULT 'USUARIO',
+    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE Eventos (
+    id_evento INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(150) NOT NULL,
+    descripcion TEXT,
+    categoria ENUM('Concierto', 'Taller', 'Conferencia', 'Feria') NOT NULL,
+    fecha_hora DATETIME NOT NULL,
+    lugar VARCHAR(255) NOT NULL,
+    precio DECIMAL(10,2) NOT NULL,
+    capacidad_total INT NOT NULL,
+    cupos_disponibles INT NOT NULL,
+    imagen_url VARCHAR(255)
+);
+
+CREATE TABLE Inscripciones (
+    id_inscripcion INT AUTO_INCREMENT PRIMARY KEY,
+    id_usuario INT NOT NULL,
+    id_evento INT NOT NULL,
+    fecha_inscripcion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    estado ENUM('ACTIVA', 'CANCELADA') DEFAULT 'ACTIVA',
+    FOREIGN KEY (id_usuario) REFERENCES Usuarios(id_usuario),
+    FOREIGN KEY (id_evento) REFERENCES Eventos(id_evento)
+);
