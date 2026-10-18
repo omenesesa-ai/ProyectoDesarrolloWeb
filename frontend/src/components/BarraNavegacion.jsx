@@ -7,7 +7,7 @@ function BarraNavegacion({ usuario, setUsuarioActual, setVistaActual }) {
 
   return (
     <nav style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px 30px', background: '#333', color: 'white' }}>
-      <h2 style={{ margin: 0, color: '#ffeb3b' }}>🎫 Sistema de Eventos</h2>
+      <h2 style={{ margin: 0, color: '#ffeb3b' }}>Sistema de Eventos</h2>
       
       <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
         <span style={{ fontSize: '16px' }}>

@@ -74,7 +74,7 @@ function PantallaCatalogo({ usuario, setUsuarioActual, setVistaActual }) {
       ? 'linear-gradient(135deg, #142132, #23364a, #182638)'
       : 'linear-gradient(135deg, #eaf4fa, #d9e9f3, #edf5f8)',
 
-    titulo: modoOscuro ? '#e4edf7' : '#294d6b',
+    titulo: modoOscuro ? '#7aa9de' : '#294d6b',
     texto: modoOscuro ? '#b5c5d5' : '#526b80',
     panel: modoOscuro ? '#25364a' : '#ffffff',
     borde: modoOscuro ? '#405267' : '#d8e3ed',

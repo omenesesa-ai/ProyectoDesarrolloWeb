@@ -91,7 +91,7 @@ function PantallaHistorial({ usuario, setUsuarioActual, setVistaActual }) {
       
       <div style={{ padding: '30px 20px', maxWidth: '950px', margin: '0 auto' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-          <h2 style={{ margin: 0, color: '#1a252f' }}>Mis Inscripciones 🎫</h2>
+          <h2 style={{ margin: 0, color: '#1a252f' }}>Mis Inscripciones </h2>
           
           <button 
             onClick={() => setVistaActual('catalogo')} 
