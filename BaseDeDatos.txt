@@ -1,0 +1,71 @@
+CREATE DATABASE sistema_eventos;
+USE sistema_eventos;
+
+CREATE TABLE Usuarios (
+    id_usuario INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    correo VARCHAR(150) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    rol ENUM('ADMIN', 'USUARIO') DEFAULT 'USUARIO',
+    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE Eventos (
+    id_evento INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(150) NOT NULL,
+    descripcion TEXT,
+    categoria ENUM('Concierto', 'Taller', 'Conferencia', 'Feria') NOT NULL,
+    fecha_hora DATETIME NOT NULL,
+    lugar VARCHAR(255) NOT NULL,
+    precio DECIMAL(10,2) NOT NULL,
+    capacidad_total INT NOT NULL,
+    cupos_disponibles INT NOT NULL,
+    imagen_url VARCHAR(255)
+);
+
+CREATE TABLE Inscripciones (
+    id_inscripcion INT AUTO_INCREMENT PRIMARY KEY,
+    id_usuario INT NOT NULL,
+    id_evento INT NOT NULL,
+    fecha_inscripcion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    estado ENUM('ACTIVA', 'CANCELADA') DEFAULT 'ACTIVA',
+    FOREIGN KEY (id_usuario) REFERENCES Usuarios(id_usuario),
+    FOREIGN KEY (id_evento) REFERENCES Eventos(id_evento)
+);
+
+-- 1. Insertar usuarios con contraseña
+INSERT INTO Usuarios (nombre, correo, password_hash, rol) VALUES
+('Carlos Mendoza', 'carlos.mendoza@email.com', '123456', 'ADMIN'),
+('Ana Gutiérrez', 'ana.gutierrez@email.com', '654321', 'USUARIO'),
+('Luis Fernández', 'luis.fernandez@email.com', '112233', 'USUARIO');
+
+-- 2. Insertar eventos
+INSERT INTO Eventos (nombre, descripcion, categoria, fecha_hora, lugar, precio, capacidad_total, cupos_disponibles, imagen_url) VALUES
+('Concierto de Rock Urbano', 'Gran concierto con las mejores bandas locales de rock.', 'Concierto', '2026-11-15 20:00:00', 'Auditorio Municipal', 150.00, 500, 499, 'https://ejemplo.com/imagenes/rock.jpg'),
+('Taller de Desarrollo Web con React', 'Aprende las bases de React y Node.js en este taller intensivo de 4 horas.', 'Taller', '2026-11-20 10:00:00', 'Centro de Innovación Tecnológica', 50.00, 30, 29, 'https://ejemplo.com/imagenes/react.jpg'),
+('Conferencia de Inteligencia Artificial', 'Expertos internacionales hablan sobre el futuro de la IA y el trabajo.', 'Conferencia', '2026-12-05 16:30:00', 'Hotel Real Intercontinental - Salón A', 0.00, 200, 199, 'https://ejemplo.com/imagenes/ia.jpg');
+
+-- 3. Insertar inscripciones
+INSERT INTO Inscripciones (id_usuario, id_evento, estado) VALUES
+(2, 1, 'ACTIVA'),    -- Ana se inscribió al Concierto
+(3, 2, 'ACTIVA'),    -- Luis se inscribió al Taller de React
+(2, 3, 'CANCELADA'); -- Ana se inscribió a la Conferencia pero luego canceló
+
+-- 1. Desactivar el modo seguro para esta sesión
+SET SQL_SAFE_UPDATES = 0;
+
+-- 2. Ejecutar tus consultas de actualización
+UPDATE Eventos 
+SET imagen_url = 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=500' 
+WHERE nombre = 'Concierto de Rock Urbano';
+
+UPDATE Eventos 
+SET imagen_url = 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=500' 
+WHERE nombre = 'Taller de Desarrollo Web con React';
+
+UPDATE Eventos 
+SET imagen_url = 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=500' 
+WHERE nombre = 'Conferencia de Inteligencia Artificial';
+
+-- 3. Volver a activar el modo seguro (opcional)
+SET SQL_SAFE_UPDATES = 1;
