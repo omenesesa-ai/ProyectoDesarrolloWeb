@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 function PantallaAuth({ onLogin }) {
   const [esRegistro, setEsRegistro] = useState(false);
@@ -8,8 +8,15 @@ function PantallaAuth({ onLogin }) {
   const [password, setPassword] = useState('');
   const [mensajeError, setMensajeError] = useState('');
 
-  // Estado para cambiar entre tema claro y oscuro
-  const [modoOscuro, setModoOscuro] = useState(false);
+  // Recuperar el tema guardado
+  const [modoOscuro, setModoOscuro] = useState(() => {
+    return localStorage.getItem('temaOscuro') === 'true';
+  });
+
+  // Guardar el tema cuando cambie
+  useEffect(() => {
+    localStorage.setItem('temaOscuro', String(modoOscuro));
+  }, [modoOscuro]);
 
   const manejarSubmit = async (e) => {
     e.preventDefault();
@@ -50,12 +57,10 @@ function PantallaAuth({ onLogin }) {
     }
   };
 
-  // Colores que cambian segun el tema
   const colores = {
     fondo: modoOscuro
       ? 'linear-gradient(135deg, #142132, #23364a, #182638)'
       : 'linear-gradient(135deg, #eaf4fa, #d9e9f3, #edf5f8)',
-
     tarjeta: modoOscuro ? '#25364a' : '#ffffff',
     titulo: modoOscuro ? '#e4edf7' : '#294d6b',
     texto: modoOscuro ? '#b5c5d5' : '#8193a3',
@@ -109,7 +114,7 @@ function PantallaAuth({ onLogin }) {
         transition: 'background-color 0.3s ease'
       }}>
 
-        {/* Boton para cambiar el tema */}
+        {/* Boton para cambiar tema */}
         <button
           type="button"
           onClick={() => setModoOscuro(!modoOscuro)}
@@ -191,7 +196,6 @@ function PantallaAuth({ onLogin }) {
               }}>
                 Nombre completo
               </label>
-
               <input
                 type="text"
                 placeholder="Escribe tu nombre"
@@ -210,7 +214,6 @@ function PantallaAuth({ onLogin }) {
             }}>
               Correo electrónico
             </label>
-
             <input
               type="email"
               placeholder="ejemplo@correo.com"
@@ -228,7 +231,6 @@ function PantallaAuth({ onLogin }) {
             }}>
               Contraseña
             </label>
-
             <input
               type="password"
               placeholder="Ingresa tu contraseña"
