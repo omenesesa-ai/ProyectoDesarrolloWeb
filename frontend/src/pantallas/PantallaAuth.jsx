@@ -8,6 +8,9 @@ function PantallaAuth({ onLogin }) {
   const [password, setPassword] = useState('');
   const [mensajeError, setMensajeError] = useState('');
 
+  // Estado para cambiar entre tema claro y oscuro
+  const [modoOscuro, setModoOscuro] = useState(false);
+
   const manejarSubmit = async (e) => {
     e.preventDefault();
     setMensajeError('');
@@ -47,14 +50,32 @@ function PantallaAuth({ onLogin }) {
     }
   };
 
+  // Colores que cambian segun el tema
+  const colores = {
+    fondo: modoOscuro
+      ? 'linear-gradient(135deg, #142132, #23364a, #182638)'
+      : 'linear-gradient(135deg, #eaf4fa, #d9e9f3, #edf5f8)',
+
+    tarjeta: modoOscuro ? '#25364a' : '#ffffff',
+    titulo: modoOscuro ? '#e4edf7' : '#294d6b',
+    texto: modoOscuro ? '#b5c5d5' : '#8193a3',
+    etiqueta: modoOscuro ? '#d4e0eb' : '#526b80',
+    input: modoOscuro ? '#34475d' : '#f8fbfd',
+    borde: modoOscuro ? '#4a5c70' : '#d8e3ed',
+    textoInput: modoOscuro ? '#ffffff' : '#263b50',
+    icono: modoOscuro ? '#34475d' : '#e7f1f8',
+    boton: '#638eaf',
+    separador: modoOscuro ? '#405267' : '#edf1f5'
+  };
+
   const estiloInput = {
     padding: '14px 16px',
     borderRadius: '10px',
-    border: '1px solid #d8e3ed',
+    border: `1px solid ${colores.borde}`,
     fontSize: '15px',
     outlineColor: '#8aafce',
-    backgroundColor: '#f8fbfd',
-    color: '#263b50',
+    backgroundColor: colores.input,
+    color: colores.textoInput,
     width: '100%',
     boxSizing: 'border-box'
   };
@@ -66,28 +87,56 @@ function PantallaAuth({ onLogin }) {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      background: 'linear-gradient(135deg, #eaf4fa, #d9e9f3, #edf5f8)',
+      background: colores.fondo,
       padding: '24px',
       boxSizing: 'border-box',
-      fontFamily: 'Arial, sans-serif'
+      fontFamily: 'Arial, sans-serif',
+      transition: 'background 0.3s ease'
     }}>
 
       <div style={{
-        backgroundColor: '#ffffff',
+        backgroundColor: colores.tarjeta,
         padding: '42px 35px',
         borderRadius: '20px',
-        boxShadow: '0 12px 35px rgba(49, 85, 117, 0.12)',
+        boxShadow: modoOscuro
+          ? '0 12px 35px rgba(0, 0, 0, 0.3)'
+          : '0 12px 35px rgba(49, 85, 117, 0.12)',
         width: '100%',
         maxWidth: '410px',
         textAlign: 'center',
-        boxSizing: 'border-box'
+        boxSizing: 'border-box',
+        position: 'relative',
+        transition: 'background-color 0.3s ease'
       }}>
+
+        {/* Boton para cambiar el tema */}
+        <button
+          type="button"
+          onClick={() => setModoOscuro(!modoOscuro)}
+          title={modoOscuro ? 'Activar modo claro' : 'Activar modo oscuro'}
+          aria-label={modoOscuro ? 'Activar modo claro' : 'Activar modo oscuro'}
+          style={{
+            position: 'absolute',
+            top: '18px',
+            right: '18px',
+            backgroundColor: colores.icono,
+            color: colores.titulo,
+            border: 'none',
+            borderRadius: '50%',
+            width: '42px',
+            height: '42px',
+            cursor: 'pointer',
+            fontSize: '20px'
+          }}
+        >
+          {modoOscuro ? '☀️' : '🌙'}
+        </button>
 
         <div style={{
           width: '65px',
           height: '65px',
           borderRadius: '18px',
-          backgroundColor: '#e7f1f8',
+          backgroundColor: colores.icono,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -98,7 +147,7 @@ function PantallaAuth({ onLogin }) {
         </div>
 
         <h2 style={{
-          color: '#294d6b',
+          color: colores.titulo,
           marginBottom: '10px',
           fontSize: '27px'
         }}>
@@ -106,7 +155,7 @@ function PantallaAuth({ onLogin }) {
         </h2>
 
         <p style={{
-          color: '#8193a3',
+          color: colores.texto,
           fontSize: '14px',
           marginBottom: '30px'
         }}>
@@ -117,8 +166,8 @@ function PantallaAuth({ onLogin }) {
 
         {mensajeError && (
           <p style={{
-            color: '#b84242',
-            backgroundColor: '#fff0f0',
+            color: modoOscuro ? '#ffb4b4' : '#b84242',
+            backgroundColor: modoOscuro ? '#583b45' : '#fff0f0',
             padding: '12px',
             borderRadius: '8px',
             fontSize: '14px'
@@ -136,9 +185,13 @@ function PantallaAuth({ onLogin }) {
 
           {esRegistro && (
             <div>
-              <label style={{ color: '#526b80', fontSize: '13px' }}>
+              <label style={{
+                color: colores.etiqueta,
+                fontSize: '13px'
+              }}>
                 Nombre completo
               </label>
+
               <input
                 type="text"
                 placeholder="Escribe tu nombre"
@@ -151,9 +204,13 @@ function PantallaAuth({ onLogin }) {
           )}
 
           <div>
-            <label style={{ color: '#526b80', fontSize: '13px' }}>
+            <label style={{
+              color: colores.etiqueta,
+              fontSize: '13px'
+            }}>
               Correo electrónico
             </label>
+
             <input
               type="email"
               placeholder="ejemplo@correo.com"
@@ -165,9 +222,13 @@ function PantallaAuth({ onLogin }) {
           </div>
 
           <div>
-            <label style={{ color: '#526b80', fontSize: '13px' }}>
+            <label style={{
+              color: colores.etiqueta,
+              fontSize: '13px'
+            }}>
               Contraseña
             </label>
+
             <input
               type="password"
               placeholder="Ingresa tu contraseña"
@@ -180,7 +241,7 @@ function PantallaAuth({ onLogin }) {
 
           <button type="submit" style={{
             padding: '15px',
-            backgroundColor: '#638eaf',
+            backgroundColor: colores.boton,
             color: 'white',
             border: 'none',
             borderRadius: '10px',
@@ -196,10 +257,11 @@ function PantallaAuth({ onLogin }) {
 
         <div style={{
           marginTop: '28px',
-          borderTop: '1px solid #edf1f5',
+          borderTop: `1px solid ${colores.separador}`,
           paddingTop: '20px'
         }}>
           <button
+            type="button"
             onClick={() => {
               setEsRegistro(!esRegistro);
               setMensajeError('');
@@ -207,7 +269,7 @@ function PantallaAuth({ onLogin }) {
             style={{
               background: 'none',
               border: 'none',
-              color: '#638eaf',
+              color: modoOscuro ? '#a9d0f0' : '#638eaf',
               cursor: 'pointer',
               fontSize: '14px',
               fontWeight: 'bold'
