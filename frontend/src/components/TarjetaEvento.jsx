@@ -9,11 +9,11 @@ function TarjetaEvento({ evento, onInscribir, yaInscrito }) {
   let deshabilitado = false;
 
   if (yaInscrito) {
-    textoBoton = 'Ya Inscrito ✅';
+    textoBoton = 'Ya Inscrito ';
     colorBoton = '#28a745'; // Verde
     deshabilitado = true;
   } else if (evento.cupos_disponibles <= 0) {
-    textoBoton = 'Agotado ❌';
+    textoBoton = 'Agotado ';
     colorBoton = '#ccc'; // Gris
     deshabilitado = true;
   }

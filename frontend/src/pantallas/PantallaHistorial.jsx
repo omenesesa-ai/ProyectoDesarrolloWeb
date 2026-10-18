@@ -6,14 +6,16 @@ function PantallaHistorial({ usuario, setUsuarioActual, setVistaActual }) {
   const [cargando, setCargando] = useState(true);
   const [errorHistorial, setErrorHistorial] = useState('');
   const [procesandoId, setProcesandoId] = useState(null);
+  
   const [filtroEstado, setFiltroEstado] = useState('TODAS');
 
   useEffect(() => {
     const cargarHistorial = async () => {
-      setCargando(true);
-      setErrorHistorial('');
       try {
+        setCargando(true);
+        setErrorHistorial('');
         const respuesta = await fetch(`http://localhost:3000/api/mis-inscripciones/${usuario.id_usuario}`);
+        
         if (respuesta.ok) {
           const datos = await respuesta.json();
           setMisInscripciones(datos);
@@ -60,10 +62,27 @@ function PantallaHistorial({ usuario, setUsuarioActual, setVistaActual }) {
     }
   };
 
-  const inscripcionesFiltradas = misInscripciones.filter(ins => {
-    if (filtroEstado === 'ACTIVA') return ins.estado === 'ACTIVA';
-    if (filtroEstado === 'CANCELADA') return ins.estado === 'CANCELADA';
-    return true;
+  // 1. Procesamos las inscripciones para detectar cuáles ya pasaron de fecha
+  const inscripcionesProcesadas = misInscripciones.map(ins => {
+    const fechaEvento = new Date(ins.fecha_hora);
+    const fechaActual = new Date();
+    const yaPaso = fechaEvento < fechaActual;
+
+    // Si está activa pero ya pasó la fecha, su estado real para el usuario es FINALIZADO
+    let estadoVisible = ins.estado;
+    if (ins.estado === 'ACTIVA' && yaPaso) {
+      estadoVisible = 'FINALIZADO';
+    }
+
+    return { ...ins, estadoVisible, yaPaso };
+  });
+
+  // 2. Filtramos basándonos en el nuevo estado calculado
+  const inscripcionesFiltradas = inscripcionesProcesadas.filter(ins => {
+    if (filtroEstado === 'ACTIVA') return ins.estadoVisible === 'ACTIVA';
+    if (filtroEstado === 'CANCELADA') return ins.estadoVisible === 'CANCELADA';
+    if (filtroEstado === 'FINALIZADO') return ins.estadoVisible === 'FINALIZADO';
+    return true; // 'TODAS'
   });
 
   return (
@@ -76,82 +95,34 @@ function PantallaHistorial({ usuario, setUsuarioActual, setVistaActual }) {
           
           <button 
             onClick={() => setVistaActual('catalogo')} 
-            style={{ 
-              padding: '10px 18px', 
-              cursor: 'pointer', 
-              background: '#fe0000', 
-              color: 'white', 
-              border: 'none', 
-              borderRadius: '6px',
-              fontWeight: '600',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}
+            style={{ padding: '10px 18px', cursor: 'pointer', background: '#fe0000', color: 'white', border: 'none', borderRadius: '6px', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '8px' }}
           >
             ⬅ Volver al Catálogo
           </button>
         </div>
 
+        {/* Sección de Filtros */}
         {!cargando && !errorHistorial && misInscripciones.length > 0 && (
-          <div style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
             <span style={{ fontWeight: 'bold', color: '#495057' }}>Filtrar por estado:</span>
-            <button 
-              onClick={() => setFiltroEstado('TODAS')}
-              style={{
-                padding: '6px 14px',
-                borderRadius: '20px',
-                border: 'none',
-                cursor: 'pointer',
-                fontWeight: '600',
-                backgroundColor: filtroEstado === 'TODAS' ? '#007BFF' : '#e9ecef',
-                color: filtroEstado === 'TODAS' ? 'white' : '#495057'
-              }}
-            >
-              Todas ({misInscripciones.length})
+            
+            <button onClick={() => setFiltroEstado('TODAS')} style={{ padding: '6px 14px', borderRadius: '20px', border: 'none', cursor: 'pointer', fontWeight: '600', backgroundColor: filtroEstado === 'TODAS' ? '#007BFF' : '#e9ecef', color: filtroEstado === 'TODAS' ? 'white' : '#495057' }}>
+              Todas ({inscripcionesProcesadas.length})
             </button>
-            <button 
-              onClick={() => setFiltroEstado('ACTIVA')}
-              style={{
-                padding: '6px 14px',
-                borderRadius: '20px',
-                border: 'none',
-                cursor: 'pointer',
-                fontWeight: '600',
-                backgroundColor: filtroEstado === 'ACTIVA' ? '#27ea4e' : '#e9ecef',
-                color: filtroEstado === 'ACTIVA' ? 'white' : '#495057'
-              }}
-            >
-              Activas ({misInscripciones.filter(i => i.estado === 'ACTIVA').length})
+            <button onClick={() => setFiltroEstado('ACTIVA')} style={{ padding: '6px 14px', borderRadius: '20px', border: 'none', cursor: 'pointer', fontWeight: '600', backgroundColor: filtroEstado === 'ACTIVA' ? '#27ea4e' : '#e9ecef', color: filtroEstado === 'ACTIVA' ? 'white' : '#495057' }}>
+              Próximas ({inscripcionesProcesadas.filter(i => i.estadoVisible === 'ACTIVA').length})
             </button>
-            <button 
-              onClick={() => setFiltroEstado('CANCELADA')}
-              style={{
-                padding: '6px 14px',
-                borderRadius: '20px',
-                border: 'none',
-                cursor: 'pointer',
-                fontWeight: '600',
-                backgroundColor: filtroEstado === 'CANCELADA' ? '#ff0000' : '#e9ecef',
-                color: filtroEstado === 'CANCELADA' ? 'white' : '#495057'
-              }}
-            >
-              Canceladas ({misInscripciones.filter(i => i.estado === 'CANCELADA').length})
+            <button onClick={() => setFiltroEstado('FINALIZADO')} style={{ padding: '6px 14px', borderRadius: '20px', border: 'none', cursor: 'pointer', fontWeight: '600', backgroundColor: filtroEstado === 'FINALIZADO' ? '#6c757d' : '#e9ecef', color: filtroEstado === 'FINALIZADO' ? 'white' : '#495057' }}>
+              Finalizadas ({inscripcionesProcesadas.filter(i => i.estadoVisible === 'FINALIZADO').length})
+            </button>
+            <button onClick={() => setFiltroEstado('CANCELADA')} style={{ padding: '6px 14px', borderRadius: '20px', border: 'none', cursor: 'pointer', fontWeight: '600', backgroundColor: filtroEstado === 'CANCELADA' ? '#ff0000' : '#e9ecef', color: filtroEstado === 'CANCELADA' ? 'white' : '#495057' }}>
+              Canceladas ({inscripcionesProcesadas.filter(i => i.estadoVisible === 'CANCELADA').length})
             </button>
           </div>
         )}
 
-        {cargando && (
-          <div style={{ textAlign: 'center', padding: '40px', color: '#6c757d' }}>
-            <p style={{ fontSize: '18px' }}>Cargando tus inscripciones...</p>
-          </div>
-        )}
-
-        {!cargando && errorHistorial && (
-          <div style={{ backgroundColor: '#f8d7da', color: '#842029', padding: '15px', borderRadius: '6px', textAlign: 'center' }}>
-            {errorHistorial}
-          </div>
-        )}
+        {cargando && <div style={{ textAlign: 'center', padding: '40px', color: '#6c757d' }}><p style={{ fontSize: '18px' }}>Cargando tus inscripciones...</p></div>}
+        {!cargando && errorHistorial && <div style={{ backgroundColor: '#f8d7da', color: '#842029', padding: '15px', borderRadius: '6px', textAlign: 'center' }}>{errorHistorial}</div>}
 
         {!cargando && !errorHistorial && misInscripciones.length === 0 && (
           <div style={{ backgroundColor: '#fff', padding: '30px', borderRadius: '8px', textAlign: 'center', color: '#6c757d', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
@@ -161,10 +132,11 @@ function PantallaHistorial({ usuario, setUsuarioActual, setVistaActual }) {
 
         {!cargando && !errorHistorial && misInscripciones.length > 0 && inscripcionesFiltradas.length === 0 && (
           <div style={{ backgroundColor: '#fff', padding: '30px', borderRadius: '8px', textAlign: 'center', color: '#6c757d', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
-            <p style={{ fontSize: '16px', margin: 0 }}>No hay inscripciones con el estado "{filtroEstado.toLowerCase()}".</p>
+            <p style={{ fontSize: '16px', margin: 0 }}>No hay inscripciones con este estado.</p>
           </div>
         )}
 
+        {/* Tabla con datos filtrados */}
         {!cargando && !errorHistorial && inscripcionesFiltradas.length > 0 && (
           <div style={{ overflowX: 'auto', background: '#fff', borderRadius: '8px', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
@@ -181,52 +153,38 @@ function PantallaHistorial({ usuario, setUsuarioActual, setVistaActual }) {
               <tbody>
                 {inscripcionesFiltradas.map((ins, index) => {
                   const numeroRegistro = String(index + 1).padStart(2, '0');
-                  const esActiva = ins.estado === 'ACTIVA';
                   const estaProcesando = procesandoId === ins.id_evento;
+
+                  // Definimos los colores dependiendo del estado visible
+                  let bgBadge = '#f8d7da';
+                  let colorBadge = '#842029';
+                  
+                  if (ins.estadoVisible === 'ACTIVA') {
+                    bgBadge = '#d1e7dd';
+                    colorBadge = '#0f5132';
+                  } else if (ins.estadoVisible === 'FINALIZADO') {
+                    bgBadge = '#e2e3e5';
+                    colorBadge = '#41464b';
+                  }
 
                   return (
                     <tr key={ins.id_evento} style={{ borderBottom: '1px solid #eee', color: '#333' }}>
-                      <td style={{ padding: '14px', textAlign: 'center', fontWeight: 'bold', color: '#6c757d' }}>
-                        {numeroRegistro}
-                      </td>
-                      <td style={{ padding: '14px', fontWeight: '600', color: '#007BFF' }}>
-                        {ins.nombre}
-                      </td>
+                      <td style={{ padding: '14px', textAlign: 'center', fontWeight: 'bold', color: '#6c757d' }}>{numeroRegistro}</td>
+                      <td style={{ padding: '14px', fontWeight: '600', color: '#007BFF' }}>{ins.nombre}</td>
+                      <td style={{ padding: '14px' }}><span style={{ background: '#e9ecef', padding: '4px 8px', borderRadius: '4px', fontSize: '13px' }}>{ins.categoria || 'General'}</span></td>
+                      <td style={{ padding: '14px', fontSize: '14px' }}>{ins.fecha_hora ? new Date(ins.fecha_hora).toLocaleString() : 'Por confirmar'}</td>
                       <td style={{ padding: '14px' }}>
-                        <span style={{ background: '#e9ecef', padding: '4px 8px', borderRadius: '4px', fontSize: '13px' }}>
-                          {ins.categoria || 'General'}
-                        </span>
-                      </td>
-                      <td style={{ padding: '14px', fontSize: '14px' }}>
-                        {ins.fecha_hora ? new Date(ins.fecha_hora).toLocaleString() : 'Por confirmar'}
-                      </td>
-                      <td style={{ padding: '14px' }}>
-                        <span style={{ 
-                          padding: '4px 10px', 
-                          borderRadius: '12px', 
-                          fontSize: '12px', 
-                          fontWeight: 'bold',
-                          backgroundColor: esActiva ? '#d1e7dd' : '#f8d7da',
-                          color: esActiva ? '#0f5132' : '#842029'
-                        }}>
-                          {ins.estado}
+                        <span style={{ padding: '4px 10px', borderRadius: '12px', fontSize: '12px', fontWeight: 'bold', backgroundColor: bgBadge, color: colorBadge }}>
+                          {ins.estadoVisible}
                         </span>
                       </td>
                       <td style={{ padding: '14px', textAlign: 'center' }}>
-                        {esActiva ? (
+                        {/* Solo mostramos el botón de cancelar si la inscripción es ACTIVA y NO ha pasado */}
+                        {ins.estadoVisible === 'ACTIVA' ? (
                           <button 
                             onClick={() => manejarCancelacion(ins.id_evento)}
                             disabled={estaProcesando}
-                            style={{ 
-                              padding: '6px 14px', 
-                              background: estaProcesando ? '#6c757d' : '#dc3545', 
-                              color: 'white', 
-                              border: 'none', 
-                              borderRadius: '4px', 
-                              cursor: estaProcesando ? 'not-allowed' : 'pointer', 
-                              fontWeight: '600', 
-                              fontSize: '13px' 
-                            }}
+                            style={{ padding: '6px 14px', background: estaProcesando ? '#6c757d' : '#dc3545', color: 'white', border: 'none', borderRadius: '4px', cursor: estaProcesando ? 'not-allowed' : 'pointer', fontWeight: '600', fontSize: '13px' }}
                           >
                             {estaProcesando ? 'Procesando...' : 'Cancelar'}
                           </button>
